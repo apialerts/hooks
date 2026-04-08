@@ -57,7 +57,10 @@ var notFoundTmpl = template.Must(template.New("notfound").Parse(layoutStart + `
 
 func (h *Handler) Privacy(w http.ResponseWriter, r *http.Request) {
 	privacyTmpl.Execute(w, map[string]interface{}{
-		"BaseURL": h.baseURL,
+		"BaseURL":         h.baseURL,
+		"PageTitle":       "Privacy Policy",
+		"PageDescription": "Privacy policy for hooks.apialerts.com. No cookies, no analytics, no tracking. All data auto-deleted after 7 days of inactivity.",
+		"CanonicalURL":    h.baseURL + "/privacy",
 	})
 }
 
@@ -76,7 +79,15 @@ func (h *Handler) SitemapXml(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/xml")
 	fmt.Fprintf(w, `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url><loc>%s/</loc></url>
-    <url><loc>%s/privacy</loc></url>
+    <url>
+        <loc>%s/</loc>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>%s/privacy</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
 </urlset>`, h.baseURL, h.baseURL)
 }

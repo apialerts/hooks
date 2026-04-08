@@ -5,8 +5,22 @@ const layoutStart = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webhook Tester - hooks.apialerts.com</title>
-    <meta name="description" content="Free webhook testing tool. Generate a unique URL, inspect requests, and toggle between success and failure responses. Built by API Alerts.">
+    <title>{{if .PageTitle}}{{.PageTitle}} - {{end}}hooks.apialerts.com</title>
+    <meta name="description" content="{{if .PageDescription}}{{.PageDescription}}{{else}}Free webhook testing tool. Generate a unique URL, inspect requests, and toggle between success and failure responses to test retry logic. No sign-up required.{{end}}">
+    <link rel="canonical" href="{{.CanonicalURL}}">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="hooks.apialerts.com">
+    <meta property="og:title" content="{{if .PageTitle}}{{.PageTitle}} - {{end}}hooks.apialerts.com">
+    <meta property="og:description" content="{{if .PageDescription}}{{.PageDescription}}{{else}}Free webhook testing tool. Generate a unique URL, inspect requests, and toggle between success and failure responses to test retry logic. No sign-up required.{{end}}">
+    <meta property="og:url" content="{{.CanonicalURL}}">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{if .PageTitle}}{{.PageTitle}} - {{end}}hooks.apialerts.com">
+    <meta name="twitter:description" content="{{if .PageDescription}}{{.PageDescription}}{{else}}Free webhook testing tool. Generate a unique URL, inspect requests, and toggle between success and failure responses to test retry logic. No sign-up required.{{end}}">
+
     <link rel="icon" href="/static/favicon.ico">
     <link rel="icon" href="/static/favicon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
     <link rel="icon" href="/static/favicon-light.svg" type="image/svg+xml" media="(prefers-color-scheme: light)">
@@ -97,7 +111,7 @@ const layoutEnd = `
     <footer class="mt-auto border-t border-gray-200 dark:border-dark-border">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
             <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <span class="text-xs font-semibold text-gray-500 dark:text-dark-text-muted">A free tool by <a href="https://apialerts.com" target="_blank" class="text-brand hover:underline">API Alerts</a></span>
+                <span class="text-xs font-semibold text-gray-500 dark:text-dark-text-muted">A free tool by <a href="https://apialerts.com" target="_blank" class="text-brand hover:underline">API Alerts &mdash; notification delivery platform</a></span>
                 <div class="flex items-center gap-4 text-xs text-gray-400 dark:text-dark-text-muted">
                     <a href="/privacy" class="hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors">Privacy</a>
                     <a href="https://github.com/apialerts/hooks" target="_blank" class="hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors">GitHub</a>

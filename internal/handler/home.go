@@ -7,6 +7,27 @@ import (
 )
 
 var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Webhook Tester",
+    "url": "https://hooks.apialerts.com",
+    "description": "Free webhook testing tool. Generate a unique URL, inspect incoming requests, and toggle between success, error, and timeout responses to test retry logic.",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Any",
+    "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+    },
+    "author": {
+        "@type": "Organization",
+        "name": "API Alerts",
+        "url": "https://apialerts.com"
+    }
+}
+</script>
 <main class="max-w-2xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
     <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight dark:text-dark-text mb-4">Webhook Tester</h1>
     <p class="text-gray-600 dark:text-dark-text-secondary leading-relaxed mb-8">
@@ -37,7 +58,7 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
     <div class="mb-16">
         <h2 class="text-lg font-bold dark:text-dark-text mb-3">Why this exists</h2>
         <p class="text-gray-600 dark:text-dark-text-secondary leading-relaxed mb-3">
-            We built this to test <a href="https://apialerts.com" target="_blank" class="text-brand hover:underline">API Alerts</a>' webhook delivery. We needed to know: does our sender actually retry on 5xx? Does it give up on 4xx? Does it handle a 30-second timeout without crashing?
+            We built this to test webhook delivery for <a href="https://apialerts.com" target="_blank" class="text-brand hover:underline">API Alerts, a notification delivery platform</a>. We needed to know: does our sender actually retry on 5xx? Does it give up on 4xx? Does it handle a 30-second timeout without crashing?
         </p>
         <p class="text-gray-600 dark:text-dark-text-secondary leading-relaxed">
             Existing tools show the request. We needed to control the response. So we built Hooks, and then open-sourced it.
@@ -81,10 +102,13 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
     </div>
 
     <!-- Open source -->
-    <div class="text-sm text-gray-500 dark:text-dark-text-muted border-t border-gray-200 dark:border-dark-border pt-8">
+    <div class="text-sm text-gray-500 dark:text-dark-text-muted border-t border-gray-200 dark:border-dark-border pt-8 space-y-3">
         <p>
             MIT licensed. Single Go binary, Postgres, HTMX. No JavaScript frameworks.
             <a href="https://github.com/apialerts/hooks" target="_blank" class="text-brand hover:underline">View on GitHub</a> or self-host with <code class="text-xs bg-gray-100 dark:bg-dark-surface-high px-1.5 py-0.5 rounded">docker compose up</code>.
+        </p>
+        <p>
+            Need to send notifications to Slack, Discord, push, and more from a single API? Check out <a href="https://apialerts.com" target="_blank" class="text-brand hover:underline">API Alerts</a>.
         </p>
     </div>
 </main>
@@ -92,7 +116,10 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
 
 func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
 	homeTmpl.Execute(w, map[string]interface{}{
-		"BaseURL": h.baseURL,
+		"BaseURL":         h.baseURL,
+		"PageTitle":       "Free Webhook Tester",
+		"PageDescription": "Free webhook testing tool. Generate a unique URL, inspect incoming requests, and toggle between success, error, and timeout responses to test your retry logic. Open source, no sign-up required.",
+		"CanonicalURL":    h.baseURL + "/",
 	})
 }
 
@@ -124,8 +151,11 @@ func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
 		endpoints, _ := h.db.ListEndpointsByIP(ctx, ip)
 		w.WriteHeader(http.StatusTooManyRequests)
 		limitTmpl.Execute(w, map[string]interface{}{
-			"BaseURL":   h.baseURL,
-			"Endpoints": endpoints,
+			"BaseURL":         h.baseURL,
+			"Endpoints":       endpoints,
+			"PageTitle":       "Endpoint Limit Reached",
+			"PageDescription": "",
+			"CanonicalURL":    h.baseURL + "/",
 		})
 		return
 	}

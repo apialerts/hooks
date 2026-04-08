@@ -216,7 +216,10 @@ func (h *Handler) serveEndpointUI(w http.ResponseWriter, r *http.Request, id str
 	endpoint, err := h.db.GetEndpoint(ctx, id)
 	if err != nil {
 		notFoundTmpl.Execute(w, map[string]interface{}{
-			"BaseURL": h.baseURL,
+			"BaseURL":         h.baseURL,
+			"PageTitle":       "Endpoint Not Found",
+			"PageDescription": "",
+			"CanonicalURL":    h.baseURL + "/",
 		})
 		return
 	}
@@ -229,15 +232,18 @@ func (h *Handler) serveEndpointUI(w http.ResponseWriter, r *http.Request, id str
 	siblings, _ := h.db.ListEndpointsByIP(ctx, r.RemoteAddr)
 
 	endpointTmpl.Execute(w, map[string]interface{}{
-		"BaseURL":       h.baseURL,
-		"EndpointID":    endpoint.ID,
-		"EndpointURL":   fmt.Sprintf("%s/%s", h.baseURL, endpoint.ID),
-		"CurrentStatus": endpoint.ResponseStatus,
-		"CurrentDelay":  endpoint.ResponseDelay,
-		"CurrentBody":   currentBody,
-		"RequestCount":  endpoint.RequestCount,
-		"Presets":       responsePresets,
-		"Siblings":      siblings,
+		"BaseURL":         h.baseURL,
+		"EndpointID":      endpoint.ID,
+		"EndpointURL":     fmt.Sprintf("%s/%s", h.baseURL, endpoint.ID),
+		"CurrentStatus":   endpoint.ResponseStatus,
+		"CurrentDelay":    endpoint.ResponseDelay,
+		"CurrentBody":     currentBody,
+		"RequestCount":    endpoint.RequestCount,
+		"Presets":         responsePresets,
+		"Siblings":        siblings,
+		"PageTitle":       "",
+		"PageDescription": "",
+		"CanonicalURL":    h.baseURL + "/",
 	})
 }
 
@@ -292,13 +298,24 @@ func (h *Handler) TestEndpoint(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	ctx := r.Context()
 
-	if err := h.db.DeleteEndpoint(r.Context(), id); err != nil {
+	if err := h.db.DeleteEndpoint(ctx, id); err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("HX-Redirect", "/")
+	// Redirect to another endpoint if one exists, otherwise home
+	redirect := "/"
+	siblings, _ := h.db.ListEndpointsByIP(ctx, r.RemoteAddr)
+	for _, s := range siblings {
+		if s.ID != id {
+			redirect = "/" + s.ID
+			break
+		}
+	}
+
+	w.Header().Set("HX-Redirect", redirect)
 	w.WriteHeader(http.StatusOK)
 }
 
