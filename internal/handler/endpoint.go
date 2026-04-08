@@ -16,8 +16,8 @@ import (
 var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
 <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 flex flex-col flex-1 min-h-0">
     <!-- Endpoint URL -->
-    <p class="text-xs text-gray-500 dark:text-dark-text-muted mb-1.5">Your webhook endpoint. Expires 7 days after last activity.</p>
-    <div class="inline-flex items-center gap-2 mb-4 self-start">
+    <p class="text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1.5">Your webhook endpoint. Expires 7 days after last activity.</p>
+    <div class="inline-flex items-center gap-2 mb-1.5 self-start">
         <div class="inline-flex items-center gap-3 rounded-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border px-3 py-2">
             <code class="text-sm font-mono text-gray-700 dark:text-dark-text">{{.EndpointURL}}</code>
             <button onclick="navigator.clipboard.writeText('{{.EndpointURL}}')"
@@ -31,6 +31,11 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
                 title="Delete endpoint">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
         </button>
+    </div>
+    <div class="flex items-center gap-2 mb-4 flex-wrap">
+        <p class="text-[11px] text-gray-400 dark:text-dark-text-muted">Send POST, PUT, PATCH, or DELETE requests here.</p>
+        <button onclick="navigator.clipboard.writeText('curl -X POST {{.EndpointURL}} -H \'Content-Type: application/json\' -d \'{\x22event\x22: \x22test\x22}\'');this.textContent='Copied!';setTimeout(function(){document.getElementById('curl-hint').textContent='Copy curl example'},1500)" id="curl-hint"
+                class="text-[11px] text-brand hover:underline cursor-pointer">Copy curl example</button>
     </div>
     {{if gt (len .Siblings) 1}}
     <div class="flex items-center gap-2 mb-4 flex-wrap">
@@ -47,7 +52,7 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
     {{end}}
 
     <!-- Response config -->
-    <p class="text-xs text-gray-500 dark:text-dark-text-muted mb-1.5">Choose how this endpoint responds to incoming webhooks</p>
+    <p class="text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1.5">Choose how this endpoint responds to incoming webhooks</p>
     <div class="rounded-xl bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border mb-4">
         <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-dark-border">
             <div class="flex items-center gap-2">
