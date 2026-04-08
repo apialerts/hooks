@@ -5,6 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"log"
 	"net/http"
 	"os"
@@ -31,7 +32,15 @@ func main() {
 
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		databaseURL = "postgres://hooks:hooks@localhost:5432/hooks?sslmode=disable"
+		dbUser := os.Getenv("DB_USER")
+		dbPassword := os.Getenv("DB_PASSWORD")
+		dbHost := os.Getenv("DB_HOST")
+		dbName := os.Getenv("DB_NAME")
+		if dbUser != "" && dbPassword != "" && dbHost != "" && dbName != "" {
+			databaseURL = fmt.Sprintf("postgres://%s:%s@%s:5432/%s?sslmode=require", url.QueryEscape(dbUser), url.QueryEscape(dbPassword), dbHost, dbName)
+		} else {
+			databaseURL = "postgres://hooks:hooks@localhost:5432/hooks?sslmode=disable"
+		}
 	}
 
 	baseURL := os.Getenv("BASE_URL")

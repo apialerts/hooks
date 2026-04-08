@@ -1,4 +1,4 @@
-.PHONY: dev build run clean migrate
+.PHONY: dev build run clean test migrate
 
 # Development
 dev:
@@ -11,6 +11,10 @@ build:
 # Run built binary
 run: build
 	./bin/hooks
+
+# Test
+test:
+	go test -v ./...
 
 # Clean
 clean:

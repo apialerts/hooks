@@ -143,6 +143,21 @@ docker build -t hooks .
 # Deploy to Cloud Run with DATABASE_URL and BASE_URL env vars
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and guidelines.
+
+## Attribution
+
+Built with these open-source projects:
+
+- [Chi](https://github.com/go-chi/chi) — HTTP router
+- [pgx](https://github.com/jackc/pgx) — PostgreSQL driver
+- [Goose](https://github.com/pressly/goose) — database migrations
+- [HTMX](https://htmx.org) — frontend interactivity
+- [Tailwind CSS](https://tailwindcss.com) — styling
+- [Petname](https://github.com/dustinkirkland/golang-petname) — URL slug generation
+
 ## License
 
 MIT

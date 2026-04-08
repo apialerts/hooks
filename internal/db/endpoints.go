@@ -73,6 +73,28 @@ func (q *Queries) CountEndpointsByIP(ctx context.Context, ip string) (int, error
 	return count, err
 }
 
+func (q *Queries) ListEndpointsByIP(ctx context.Context, ip string) ([]*Endpoint, error) {
+	rows, err := q.pool.Query(ctx,
+		`SELECT id, creator_ip, response_status, response_delay_ms, response_body, request_count, created_at, last_activity_at
+		 FROM endpoints WHERE creator_ip = $1 ORDER BY last_activity_at DESC`,
+		ip,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var endpoints []*Endpoint
+	for rows.Next() {
+		e := &Endpoint{}
+		if err := rows.Scan(&e.ID, &e.CreatorIP, &e.ResponseStatus, &e.ResponseDelay, &e.ResponseBody, &e.RequestCount, &e.CreatedAt, &e.LastActivityAt); err != nil {
+			return nil, err
+		}
+		endpoints = append(endpoints, e)
+	}
+	return endpoints, rows.Err()
+}
+
 func (q *Queries) DeleteEndpoint(ctx context.Context, id string) error {
 	_, err := q.pool.Exec(ctx, `DELETE FROM endpoints WHERE id = $1`, id)
 	return err
@@ -80,7 +102,7 @@ func (q *Queries) DeleteEndpoint(ctx context.Context, id string) error {
 
 func (q *Queries) DeleteExpiredEndpoints(ctx context.Context) (int64, error) {
 	result, err := q.pool.Exec(ctx,
-		`DELETE FROM endpoints WHERE last_activity_at < now() - INTERVAL '14 days'`,
+		`DELETE FROM endpoints WHERE last_activity_at < now() - INTERVAL '7 days'`,
 	)
 	if err != nil {
 		return 0, err

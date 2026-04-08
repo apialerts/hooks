@@ -28,9 +28,9 @@ var responsePresets = []ResponsePreset{
 	{Status: 401, Delay: 0, Label: "401 Unauthorized", DefaultBody: `{"error": "unauthorized", "message": "Authentication required"}`},
 	{Status: 403, Delay: 0, Label: "403 Forbidden", DefaultBody: `{"error": "forbidden", "message": "Insufficient permissions"}`},
 	{Status: 404, Delay: 0, Label: "404 Not Found", DefaultBody: `{"error": "not_found", "message": "Resource not found"}`},
-	{Status: 500, Delay: 0, Label: "500 Internal Server Error", DefaultBody: `{"error": "internal_error", "message": "Something went wrong"}`},
-	{Status: 503, Delay: 0, Label: "503 Service Unavailable", DefaultBody: `{"error": "unavailable", "message": "Service temporarily unavailable"}`},
-	{Status: 200, Delay: 30000, Label: "Timeout (30s)", DefaultBody: `{"status": "ok"}`},
+	{Status: 500, Delay: 0, Label: "500 Internal Server Error", DefaultBody: `Internal Server Error`},
+	{Status: 503, Delay: 0, Label: "503 Service Unavailable", DefaultBody: `Service Temporarily Unavailable`},
+	{Status: 200, Delay: 35000, Label: "Timeout (35s)", DefaultBody: ``},
 }
 
 func defaultBodyForStatus(status, delay int) string {

@@ -15,7 +15,14 @@ import (
 var migrationsFS embed.FS
 
 func Connect(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
-	pool, err := pgxpool.New(ctx, databaseURL)
+	config, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse database url: %w", err)
+	}
+	config.MaxConns = 5
+	config.MinConns = 1
+
+	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create connection pool: %w", err)
 	}

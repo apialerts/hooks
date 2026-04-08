@@ -71,9 +71,9 @@ func (h *Handler) receiveWebhook(w http.ResponseWriter, r *http.Request, id stri
 		return
 	}
 
-	// Trim to 500 requests max
-	if seq > 500 {
-		h.db.TrimRequests(ctx, id, 500)
+	// Trim to 50 requests max
+	if seq > 50 {
+		h.db.TrimRequests(ctx, id, 50)
 	}
 
 	if endpoint.ResponseDelay > 0 {
