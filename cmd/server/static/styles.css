@@ -1,0 +1,11 @@
+/* Minimal styles - in production, compile Tailwind CSS via standalone CLI */
+/* For development, we use the Tailwind CDN in the layout */
+/* This file will be replaced by compiled Tailwind output */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+}
