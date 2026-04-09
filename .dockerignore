@@ -1,5 +1,9 @@
 .DS_Store
 bin/
 .git
-*.md
-LICENSE
+.idea/
+/server
+/tailwindcss
+*.exe
+tailwind.config.js
+CONTRIBUTING.md

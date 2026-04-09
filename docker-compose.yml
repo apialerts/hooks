@@ -2,11 +2,10 @@ services:
   hooks:
     build: .
     ports:
-      - "3080:3080"
+      - "8080:8080"
     environment:
       - DATABASE_URL=postgres://hooks:hooks@db:5432/hooks?sslmode=disable
-      - PORT=3080
-      - BASE_URL=http://localhost:3080
+      - BASE_URL=http://localhost:8080
     depends_on:
       db:
         condition: service_healthy
@@ -18,7 +17,7 @@ services:
       - POSTGRES_PASSWORD=hooks
       - POSTGRES_DB=hooks
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

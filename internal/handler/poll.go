@@ -69,10 +69,10 @@ var requestListTmpl = template.Must(template.New("request_list").Funcs(template.
     {{range .Requests}}
     <div class="request-item flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-surface-high transition-colors group"
          data-seq="{{.Seq}}"
-         hx-get="/{{$.EndpointID}}/requests/{{.Seq}}"
+         hx-get="/{{$.EndpointSlug}}/requests/{{.Seq}}"
          hx-target="#request-detail"
          hx-swap="innerHTML"
-         onclick="if(this.style.borderLeft){return false}document.querySelectorAll('.request-item').forEach(function(el){el.style.borderLeft='';el.style.backgroundColor=''});this.style.borderLeft='2px solid #e8772e';this.style.backgroundColor='rgba(232,119,46,0.08)'">
+         onclick="if(this.style.borderLeft){return false}document.querySelectorAll('.request-item').forEach(function(el){el.style.borderLeft='';el.style.backgroundColor=''});this.style.borderLeft='2px solid #FF7A00';this.style.backgroundColor='rgba(255,122,0,0.08)'">
         <span class="px-2 py-0.5 rounded-md text-[11px] font-bold w-14 text-center tracking-wide {{methodColor .Method}}">{{.Method}}</span>
         <time class="text-xs font-mono text-gray-400 dark:text-dark-text-muted local-time" datetime="{{isoTime .ReceivedAt}}">{{isoTime .ReceivedAt}}</time>
         {{if .ResponseStatus}}<span class="text-xs font-mono font-bold {{statusColor .ResponseStatus}}">{{derefStatus .ResponseStatus}}</span>{{end}}
@@ -82,7 +82,7 @@ var requestListTmpl = template.Must(template.New("request_list").Funcs(template.
     {{end}}
 </div>
 {{else}}
-<div class="p-10 text-center">
+<div class="h-full flex flex-col items-center justify-center p-10 text-center">
     <svg class="w-8 h-8 text-gray-300 dark:text-dark-border mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
     <p class="text-sm font-medium text-gray-400 dark:text-dark-text-muted mb-1">No requests yet</p>
     <p class="text-xs text-gray-400 dark:text-dark-text-muted">Send a webhook to your endpoint URL</p>
@@ -161,10 +161,10 @@ var requestDetailTmpl = template.Must(template.New("request_detail").Funcs(templ
 			return "bg-gray-500/10 text-gray-600 dark:text-dark-text-secondary"
 		}
 	},
-	"formatTransaction": func(baseURL string, r *db.Request) string {
+	"formatTransaction": func(baseURL, slug string, r *db.Request) string {
 		var b strings.Builder
 
-		fullURL := fmt.Sprintf("%s/%s%s", baseURL, r.EndpointID, r.Path)
+		fullURL := fmt.Sprintf("%s/%s%s", baseURL, slug, r.Path)
 		if r.QueryParams != "" {
 			fullURL += "?" + r.QueryParams
 		}
@@ -231,7 +231,7 @@ var requestDetailTmpl = template.Must(template.New("request_detail").Funcs(templ
     <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-dark-border">
         <div class="flex items-center gap-2.5 min-w-0">
             <span class="px-2 py-0.5 rounded-md text-[11px] font-bold flex-shrink-0 tracking-wide {{methodColor .Request.Method}}">{{.Request.Method}}</span>
-            <span class="text-xs font-mono text-gray-500 dark:text-dark-text-secondary truncate">/{{.Request.EndpointID}}{{.Request.Path}}{{if .Request.QueryParams}}?{{.Request.QueryParams}}{{end}}</span>
+            <span class="text-xs font-mono text-gray-500 dark:text-dark-text-secondary truncate">/{{.EndpointSlug}}{{.Request.Path}}{{if .Request.QueryParams}}?{{.Request.QueryParams}}{{end}}</span>
             {{if .Request.ResponseStatus}}<span class="text-xs font-bold font-mono flex-shrink-0 {{statusColor .Request.ResponseStatus}}">{{derefStatus .Request.ResponseStatus}}</span>{{end}}
         </div>
         <div class="flex items-center gap-1 flex-shrink-0">
@@ -247,7 +247,7 @@ var requestDetailTmpl = template.Must(template.New("request_detail").Funcs(templ
             </button>
         </div>
     </div>
-    <pre id="transaction-text" class="flex-1 overflow-y-auto p-4 text-xs font-mono text-gray-700 dark:text-dark-text-secondary whitespace-pre-wrap leading-relaxed">{{formatTransaction .BaseURL .Request}}</pre>
+    <pre id="transaction-text" class="flex-1 overflow-y-auto p-4 text-xs font-mono text-gray-700 dark:text-dark-text-secondary whitespace-pre-wrap leading-relaxed">{{formatTransaction .BaseURL .EndpointSlug .Request}}</pre>
 </div>
 <script>
 function downloadTransaction() {
@@ -270,26 +270,31 @@ function downloadTransaction() {
 `))
 
 func (h *Handler) PollRequests(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	slug := chi.URLParam(r, "id")
 	ctx := r.Context()
 
-	requests, err := h.db.ListRequests(ctx, id, 50)
+	endpoint, err := h.db.GetEndpoint(ctx, slug)
+	if err != nil {
+		http.Error(w, "endpoint not found", http.StatusNotFound)
+		return
+	}
+
+	requests, err := h.db.ListRequests(ctx, endpoint.ID, 50)
 	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	count, _ := h.db.GetRequestCount(ctx, id)
-	w.Header().Set("X-Request-Count", strconv.Itoa(count))
+	w.Header().Set("X-Request-Count", strconv.Itoa(endpoint.RequestCount))
 
-	requestListTmpl.Execute(w, map[string]interface{}{
-		"EndpointID": id,
-		"Requests":   requests,
+	render(w, requestListTmpl, map[string]interface{}{
+		"EndpointSlug": slug,
+		"Requests":     requests,
 	})
 }
 
 func (h *Handler) RequestDetail(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	slug := chi.URLParam(r, "id")
 	seqStr := chi.URLParam(r, "reqId")
 	seq, err := strconv.Atoi(seqStr)
 	if err != nil {
@@ -297,14 +302,21 @@ func (h *Handler) RequestDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, err := h.db.GetRequest(r.Context(), id, seq)
+	endpoint, err := h.db.GetEndpoint(r.Context(), slug)
+	if err != nil {
+		http.Error(w, "endpoint not found", http.StatusNotFound)
+		return
+	}
+
+	req, err := h.db.GetRequest(r.Context(), endpoint.ID, seq)
 	if err != nil {
 		http.Error(w, "request not found", http.StatusNotFound)
 		return
 	}
 
-	requestDetailTmpl.Execute(w, map[string]interface{}{
-		"BaseURL": h.baseURL,
-		"Request": req,
+	render(w, requestDetailTmpl, map[string]interface{}{
+		"BaseURL":      h.baseURL,
+		"EndpointSlug": slug,
+		"Request":      req,
 	})
 }

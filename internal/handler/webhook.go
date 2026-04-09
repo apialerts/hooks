@@ -38,12 +38,11 @@ func (h *Handler) receiveWebhook(w http.ResponseWriter, r *http.Request, id stri
 		path = ""
 	}
 
-	responseBody := endpoint.ResponseBody
-	if responseBody == "" {
+	respStatus := endpoint.ResponseStatus
+	responseBody, err := h.db.GetResponseBody(ctx, endpoint.ID, endpoint.ResponseStatus, endpoint.ResponseDelay)
+	if err != nil {
 		responseBody = defaultBodyForStatus(endpoint.ResponseStatus, endpoint.ResponseDelay)
 	}
-
-	respStatus := endpoint.ResponseStatus
 
 	seq, err := h.db.TouchEndpoint(ctx, id)
 	if err != nil {
@@ -52,7 +51,7 @@ func (h *Handler) receiveWebhook(w http.ResponseWriter, r *http.Request, id stri
 	}
 
 	req := &db.Request{
-		EndpointID:     id,
+		EndpointID:     endpoint.ID,
 		Seq:            seq,
 		Method:         r.Method,
 		Path:           path,
@@ -73,7 +72,7 @@ func (h *Handler) receiveWebhook(w http.ResponseWriter, r *http.Request, id stri
 
 	// Trim to 50 requests max
 	if seq > 50 {
-		h.db.TrimRequests(ctx, id, 50)
+		h.db.TrimRequests(ctx, endpoint.ID, 50)
 	}
 
 	if endpoint.ResponseDelay > 0 {

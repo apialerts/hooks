@@ -56,7 +56,7 @@ var notFoundTmpl = template.Must(template.New("notfound").Parse(layoutStart + `
 ` + layoutEnd))
 
 func (h *Handler) Privacy(w http.ResponseWriter, r *http.Request) {
-	privacyTmpl.Execute(w, map[string]interface{}{
+	render(w, privacyTmpl, map[string]interface{}{
 		"BaseURL":         h.baseURL,
 		"PageTitle":       "Privacy Policy",
 		"PageDescription": "Privacy policy for hooks.apialerts.com. No cookies, no analytics, no tracking. All data auto-deleted after 7 days of inactivity.",
@@ -69,6 +69,7 @@ func (h *Handler) RobotsTxt(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `User-agent: *
 Allow: /$
 Allow: /privacy
+Allow: /sitemap.xml
 Disallow: /
 
 Sitemap: `+h.baseURL+`/sitemap.xml

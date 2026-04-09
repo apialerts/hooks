@@ -4,3 +4,8 @@ bin/
 /tailwindcss
 *.exe
 .idea/
+.vscode/
+*.swp
+*.swo
+*~
+.env

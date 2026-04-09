@@ -5,9 +5,9 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
-	"net/url"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -27,7 +27,7 @@ var staticFS embed.FS
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "3080"
+		port = "8080"
 	}
 
 	databaseURL := os.Getenv("DATABASE_URL")
@@ -36,10 +36,19 @@ func main() {
 		dbPassword := os.Getenv("DB_PASSWORD")
 		dbHost := os.Getenv("DB_HOST")
 		dbName := os.Getenv("DB_NAME")
+		dbPort := "5432"
+		dbPortTemp := os.Getenv("DB_PORT")
+		if dbPortTemp != "" {
+			dbPort = dbPortTemp
+		}
+		dbSSLMode := os.Getenv("DB_SSLMODE")
+		if dbSSLMode == "" {
+			dbSSLMode = "require"
+		}
 		if dbUser != "" && dbPassword != "" && dbHost != "" && dbName != "" {
-			databaseURL = fmt.Sprintf("postgres://%s:%s@%s:5432/%s?sslmode=require", url.QueryEscape(dbUser), url.QueryEscape(dbPassword), dbHost, dbName)
+			databaseURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", url.QueryEscape(dbUser), url.QueryEscape(dbPassword), dbHost, dbPort, dbName, dbSSLMode)
 		} else {
-			databaseURL = "postgres://hooks:hooks@localhost:5432/hooks?sslmode=disable"
+			databaseURL = fmt.Sprintf("postgres://hooks:hooks@localhost:%s/hooks?sslmode=disable", dbPort)
 		}
 	}
 

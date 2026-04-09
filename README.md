@@ -4,100 +4,34 @@ Free, open-source webhook testing tool. Generate a unique URL, inspect incoming 
 
 **Live at [hooks.apialerts.com](https://hooks.apialerts.com)** | Built by [API Alerts](https://apialerts.com)
 
-## Quick Start (Docker)
+## Quick Start
 
 ```bash
 docker compose up --build
 ```
 
-Open [http://localhost:3080](http://localhost:3080).
-
-## Quick Start (Local)
-
-Requires Go 1.26+ and a Postgres instance.
-
-```bash
-# Start just the database
-docker compose up db -d
-
-# Run the server
-make dev
-```
-
-Open [http://localhost:3080](http://localhost:3080).
+Open [http://localhost:8080](http://localhost:8080). The app and Postgres run together, migrations run automatically, and data persists in a Docker volume.
 
 ## Features
 
-- **Request inspector** — headers, body, query params, source IP for every request
-- **Response mode toggle** — 200, 201, 400, 401, 403, 404, 500, 503, or 30s timeout
-- **Custom response body** — each preset has a sensible JSON default, fully editable
-- **Transaction log** — plain text request/response view, copy or download as `.txt`
-- **Auto-refresh** — 30-second polling with countdown bar and manual refresh
-- **Test button** — send a sample request without leaving the browser
-- **Dark mode** — toggle between light and dark themes
-- **No sign-up** — fully anonymous, endpoints expire after 7 days of inactivity
+- **Request inspector** -- headers, body, query params, source IP for every request
+- **Response mode toggle** -- 200, 201, 400, 401, 403, 404, 500, 503, or 35s timeout
+- **Custom response bodies** -- each status code saves its own body override independently
+- **Transaction log** -- plain text request/response view, copy or download as `.txt`
+- **Auto-refresh** -- 30-second polling with countdown bar and manual refresh
+- **Test button** -- send a sample request without leaving the browser
+- **Dark mode** -- automatic, based on system preference
+- **No sign-up** -- fully anonymous, endpoints expire after 7 days of inactivity
 
-## Tech Stack
+## How It's Built
 
-- **Go** — Chi router, single binary with embedded assets
-- **Postgres** — via pgx, migrations via Goose (run automatically on startup)
-- **HTMX** — polling and partial page updates
-- **Tailwind CSS** — compiled via standalone CLI (no Node.js required)
+The goal is a single binary with zero runtime dependencies (besides Postgres) and zero JavaScript build tooling.
 
-## Project Structure
-
-```
-hooks/
-├── cmd/server/
-│   ├── main.go                 # Entry point, router, config, graceful shutdown
-│   └── static/                 # Embedded assets (favicon, HTMX, compiled CSS)
-├── internal/
-│   ├── handler/                # HTTP handlers and HTML templates
-│   ├── db/                     # Postgres queries and Goose migrations
-│   ├── cleanup/                # Background expired endpoint purge
-│   └── middleware/             # Rate limiting, CORS
-├── input.css                   # Tailwind source (v4 syntax)
-├── tailwind.config.js          # Tailwind config
-├── docker-compose.yml          # Local dev (Go app + Postgres)
-├── Dockerfile                  # Multi-stage production build
-└── Makefile
-```
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `3080` | Server port |
-| `DATABASE_URL` | `postgres://hooks:hooks@localhost:5432/hooks?sslmode=disable` | Postgres connection string |
-| `DB_USER` | — | Alternative: Postgres user (used if `DATABASE_URL` is not set) |
-| `DB_PASSWORD` | — | Alternative: Postgres password |
-| `DB_HOST` | — | Alternative: Postgres host |
-| `DB_NAME` | — | Alternative: Postgres database name |
-| `BASE_URL` | `http://localhost:{PORT}` | Public URL (used in templates and transaction logs) |
-
-When `DATABASE_URL` is not set but `DB_USER`, `DB_PASSWORD`, `DB_HOST`, and `DB_NAME` are all provided, the connection string is built as `postgres://{user}:{password}@{host}:5432/{name}?sslmode=require`.
-
-## Development
-
-```bash
-# Start Postgres
-docker compose up db -d
-
-# Run the server (auto-reloads on restart)
-make dev
-
-# Run tests
-make test
-
-# Rebuild Tailwind CSS after template changes
-make css
-
-# Watch Tailwind CSS during development
-make css-watch
-
-# Update vendored HTMX
-make update-htmx HTMX_VERSION=2.0.4
-```
+- **Go + embedded assets** -- HTML templates are defined inline in Go handler files using the standard library `html/template` package. Static assets (CSS, HTMX, favicon) are compiled into the binary via `go:embed`. No third-party template engine, no separate template files, no asset pipeline. Build it, ship it, run it.
+- **HTMX instead of a JS framework** -- the request list polls via HTMX, request details load as HTML fragments, config saves via `fetch`. The entire frontend is server-rendered HTML with a few lines of vanilla JS. No React, no bundler, no `node_modules`.
+- **Tailwind CSS standalone CLI** -- CSS is compiled by a single static binary, not a Node.js toolchain. The Docker build handles minification. In development, `make dev` runs a file watcher that rebuilds on template changes.
+- **Postgres + Goose** -- pgx for queries, Goose for migrations. Migrations run automatically on every server start, so there's no manual migration step for self-hosters or contributors.
+- **Stateless** -- no sessions, no auth, no cookies. Endpoints are identified by their slug and associated with the creator's IP for the sibling list. This makes it trivial to deploy on Cloud Run, Fly, or any container platform.
 
 ## Self-Hosting
 
@@ -107,22 +41,32 @@ make update-htmx HTMX_VERSION=2.0.4
 docker compose up --build -d
 ```
 
-Runs the Go app and Postgres together on port 3080. Data persists in a Docker volume.
+Runs the Go app and Postgres together. Data persists in a Docker volume. Migrations run automatically on startup.
+
+To change the port:
+
+```bash
+PORT=8080 docker compose up --build -d
+```
+
+Update the `ports` mapping in `docker-compose.yml` to match: `"8080:8080"`.
 
 ### Docker (bring your own Postgres)
+
+If you already have a Postgres instance:
 
 ```bash
 docker build -t hooks .
 
-docker run -p 3080:3080 \
+docker run -p 8080:8080 \
   -e DATABASE_URL="postgres://user:pass@your-db:5432/hooks?sslmode=require" \
   -e BASE_URL="https://hooks.yourdomain.com" \
   hooks
 ```
 
-### VPS (DigitalOcean, Hetzner, etc.)
+The app creates its tables automatically on startup via Goose migrations. You just need an empty database.
 
-SSH into your server, clone the repo, and run Docker Compose:
+### VPS (DigitalOcean, Hetzner, etc.)
 
 ```bash
 git clone https://github.com/apialerts/hooks.git
@@ -130,12 +74,12 @@ cd hooks
 BASE_URL=https://hooks.yourdomain.com docker compose up --build -d
 ```
 
-Point your domain's DNS to the server IP. Use a reverse proxy like Caddy or nginx for HTTPS — Caddy handles SSL certificates automatically:
+Point your domain's DNS to the server IP. Use a reverse proxy like Caddy or nginx for HTTPS. Caddy handles SSL certificates automatically:
 
 ```
 # Caddyfile
 hooks.yourdomain.com {
-    reverse_proxy localhost:3080
+    reverse_proxy localhost:8080
 }
 ```
 
@@ -156,7 +100,7 @@ gcloud run deploy hooks \
 
 Cloud Run sets the `PORT` env var automatically. The app is stateless and scales to zero.
 
-**Connecting to Cloud SQL:** Use the built-in Cloud SQL connector rather than a public IP. Add the `--add-cloudsql-instances` flag and use the Unix socket path as the host:
+**Connecting to Cloud SQL:** Use the built-in Cloud SQL connector rather than a public IP:
 
 ```bash
 gcloud run deploy hooks \
@@ -168,7 +112,26 @@ gcloud run deploy hooks \
   --set-env-vars "DATABASE_URL=postgres://user:pass@/hooks?host=/cloudsql/YOUR_PROJECT:us-central1:YOUR_INSTANCE,BASE_URL=https://hooks.yourdomain.com"
 ```
 
-Alternatively, enable a [VPC connector](https://cloud.google.com/vpc/docs/configure-serverless-vpc-access) on the Cloud Run service and use the Cloud SQL private IP directly in `DATABASE_URL`.
+## Environment Variables
+
+| Variable       | Default                    | Description                                                                    |
+|----------------|----------------------------|--------------------------------------------------------------------------------|
+| `PORT`         | `8080`                     | Port the server listens on                                                     |
+| `DATABASE_URL` | *(see below)*              | Full Postgres connection string                                                |
+| `DB_PORT`      | `5432`                     | Postgres port (only used when `DATABASE_URL` is not set)                       |
+| `DB_USER`      | --                         | Postgres user (only used when `DATABASE_URL` is not set)                       |
+| `DB_PASSWORD`  | --                         | Postgres password (only used when `DATABASE_URL` is not set)                   |
+| `DB_HOST`      | --                         | Postgres host (only used when `DATABASE_URL` is not set)                       |
+| `DB_NAME`      | --                         | Postgres database name (only used when `DATABASE_URL` is not set)              |
+| `DB_SSLMODE`   | `require`                  | Postgres SSL mode (only used when `DATABASE_URL` is not set)                   |
+| `BASE_URL`     | `http://localhost:{PORT}`  | Public-facing URL (used in templates and transaction logs)                     |
+| `KILL_SWITCH`  | `false`                    | Serve a maintenance page without connecting to the database (for abuse/outages) |
+
+**How the connection string is built:**
+
+- If `DATABASE_URL` is set, it is used directly.
+- If `DB_USER`, `DB_PASSWORD`, `DB_HOST`, and `DB_NAME` are all set, the connection string is built as: `postgres://{user}:{password}@{host}:{DB_PORT}/{name}?sslmode={DB_SSLMODE}`
+- Otherwise, it defaults to: `postgres://hooks:hooks@localhost:{DB_PORT}/hooks?sslmode=disable`
 
 ## Limits
 
@@ -186,12 +149,12 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Built with:
 
-- [Chi](https://github.com/go-chi/chi) — HTTP router
-- [pgx](https://github.com/jackc/pgx) — PostgreSQL driver
-- [Goose](https://github.com/pressly/goose) — database migrations
-- [HTMX](https://htmx.org) — frontend interactivity
-- [Tailwind CSS](https://tailwindcss.com) — styling
-- [Petname](https://github.com/dustinkirkland/golang-petname) — URL slug generation
+- [Chi](https://github.com/go-chi/chi) -- HTTP router
+- [pgx](https://github.com/jackc/pgx) -- PostgreSQL driver
+- [Goose](https://github.com/pressly/goose) -- database migrations
+- [HTMX](https://htmx.org) -- frontend interactivity
+- [Tailwind CSS](https://tailwindcss.com) -- styling
+- [Petname](https://github.com/dustinkirkland/golang-petname) -- URL slug generation
 
 ## License
 

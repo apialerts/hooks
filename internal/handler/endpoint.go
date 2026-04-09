@@ -25,7 +25,7 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
             </button>
         </div>
-        <button hx-delete="/{{.EndpointID}}/delete"
+        <button hx-delete="/{{.EndpointSlug}}/delete"
                 hx-confirm="Delete this endpoint and all its data? This cannot be undone."
                 class="text-gray-400 dark:text-dark-text-muted hover:text-red-500 dark:hover:text-red-500 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex-shrink-0"
                 title="Delete endpoint">
@@ -40,10 +40,10 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
     {{if gt (len .Siblings) 1}}
     <div class="flex items-center gap-2 mb-4 flex-wrap">
         {{range .Siblings}}
-        {{if eq .ID $.EndpointID}}
-        <span class="text-xs font-mono font-semibold text-brand px-2 py-1 rounded-lg bg-brand/10">{{.ID}}</span>
+        {{if eq .Slug $.EndpointSlug}}
+        <span class="text-xs font-mono font-semibold text-brand px-2 py-1 rounded-lg bg-brand/10">{{.Slug}}</span>
         {{else}}
-        <a href="/{{.ID}}" class="text-xs font-mono text-gray-500 dark:text-dark-text-muted hover:text-gray-700 dark:hover:text-dark-text px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-surface-high transition-colors">{{.ID}}</a>
+        <a href="/{{.Slug}}" class="text-xs font-mono text-gray-500 dark:text-dark-text-muted hover:text-gray-700 dark:hover:text-dark-text px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-surface-high transition-colors">{{.Slug}}</a>
         {{end}}
         {{end}}
     </div>
@@ -57,7 +57,7 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
         <div class="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-gray-100 dark:border-dark-border">
             <span class="text-xs font-medium text-gray-500 dark:text-dark-text-muted">Response</span>
             <select id="response-mode" onchange="onPresetChange()"
-                    class="text-xs font-semibold dark:text-dark-text bg-gray-50 dark:bg-dark-surface-high rounded-lg pl-2.5 pr-8 py-1.5 border border-gray-200 dark:border-dark-border focus:outline-none cursor-pointer flex-1 min-w-[140px]">
+                    class="text-xs font-semibold dark:text-dark-text bg-gray-50 dark:bg-dark-surface-high rounded-lg pl-2.5 pr-8 py-1.5 border border-gray-200 dark:border-dark-border focus:outline-none cursor-pointer">
                 {{range .Presets}}
                 <option value="{{.Status}}-{{.Delay}}" data-body="{{.DefaultBody}}"
                         class="bg-white dark:bg-dark-surface"
@@ -67,11 +67,11 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
                 {{end}}
             </select>
             <div class="flex items-center gap-2 ml-auto">
-                <button onclick="testEndpoint()"
+                <button id="test-btn" onclick="testEndpoint()"
                         class="text-xs font-semibold text-gray-900 dark:text-dark-text px-3 py-1 rounded-full border border-gray-300 dark:border-dark-text-muted hover:bg-gray-50 dark:hover:bg-dark-surface-high transition-colors whitespace-nowrap">
                     Send Test
                 </button>
-                <button onclick="saveConfig()"
+                <button id="save-btn" onclick="saveConfig(true)"
                         class="bg-brand hover:brightness-110 text-black text-xs font-semibold px-3.5 py-1 rounded-full transition-all whitespace-nowrap">
                     Save
                 </button>
@@ -86,6 +86,7 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
     <script>
         var currentStatus = '{{.CurrentStatus}}';
         var currentDelay = '{{.CurrentDelay}}';
+        var savedBodies = {{.SavedBodies}};
 
         function copyText(text, btn) {
             navigator.clipboard.writeText(text);
@@ -116,26 +117,53 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
         formatBody();
 
         function onPresetChange() {
-            var select = document.getElementById('response-mode');
-            var option = select.options[select.selectedIndex];
+            var sel = document.getElementById('response-mode');
+            var option = sel.options[sel.selectedIndex];
             var parts = option.value.split('-');
             currentStatus = parts[0];
             currentDelay = parts[1];
-            document.getElementById('response-body').value = option.getAttribute('data-body');
+            var key = currentStatus + '-' + currentDelay;
+            var body = savedBodies[key] || option.getAttribute('data-body');
+            document.getElementById('response-body').value = body;
             formatBody();
-            saveConfig();
-        }
-
-        function saveConfig() {
-            var body = document.getElementById('response-body').value;
-            htmx.ajax('PUT', '/{{.EndpointID}}/config', {
-                values: {status: currentStatus, delay: currentDelay, body: body},
-                swap: 'none'
+            fetch('/{{.EndpointSlug}}/config', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'status=' + encodeURIComponent(currentStatus) + '&delay=' + encodeURIComponent(currentDelay)
             });
         }
 
+        function saveConfig(showFeedback) {
+            var body = document.getElementById('response-body').value;
+            var key = currentStatus + '-' + currentDelay;
+            savedBodies[key] = body;
+            fetch('/{{.EndpointSlug}}/config', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'status=' + encodeURIComponent(currentStatus) + '&delay=' + encodeURIComponent(currentDelay) + '&body=' + encodeURIComponent(body)
+            });
+            if (showFeedback) {
+                var btn = document.getElementById('save-btn');
+                btn.textContent = 'Saved!';
+                btn.classList.remove('bg-brand');
+                btn.classList.add('bg-green-500');
+                setTimeout(function() {
+                    btn.textContent = 'Save';
+                    btn.classList.remove('bg-green-500');
+                    btn.classList.add('bg-brand');
+                }, 1500);
+            }
+        }
+
         function testEndpoint() {
-            fetch('/{{.EndpointID}}/test', {
+            var btn = document.getElementById('test-btn');
+            btn.textContent = 'Sent!';
+            btn.classList.add('border-green-500', 'text-green-600');
+            setTimeout(function() {
+                btn.textContent = 'Send Test';
+                btn.classList.remove('border-green-500', 'text-green-600');
+            }, 1500);
+            fetch('/{{.EndpointSlug}}/test', {
                 method: 'POST'
             }).then(function() {
                 refreshRequests();
@@ -168,9 +196,9 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
                     <span class="text-xs font-mono bg-gray-100 dark:bg-dark-surface-high text-gray-500 dark:text-dark-text-muted px-1.5 py-0.5 rounded" id="request-count">{{.RequestCount}}</span>
                 </div>
                 <button onclick="refreshRequests()"
-                        class="inline-flex items-center gap-1 text-xs text-brand hover:text-brand font-medium transition-colors">
-                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                    Refresh
+                        class="inline-flex items-center gap-1.5 text-sm text-brand hover:text-brand font-semibold transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Refresh Now
                 </button>
             </div>
             <div class="relative mb-2">
@@ -179,7 +207,7 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
                 </div>
             </div>
             <div id="request-list" class="flex-1 overflow-y-auto rounded-xl bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border min-h-[300px] max-h-[50vh] lg:max-h-none"
-                 hx-get="/{{.EndpointID}}/requests"
+                 hx-get="/{{.EndpointSlug}}/requests"
                  hx-trigger="load, poll, every 30s"
                  hx-swap="innerHTML">
                 <div class="p-8 text-center text-gray-400 dark:text-dark-text-muted text-sm">Loading...</div>
@@ -225,7 +253,7 @@ func (h *Handler) serveEndpointUI(w http.ResponseWriter, r *http.Request, id str
 
 	endpoint, err := h.db.GetEndpoint(ctx, id)
 	if err != nil {
-		notFoundTmpl.Execute(w, map[string]interface{}{
+		render(w, notFoundTmpl, map[string]interface{}{
 			"BaseURL":         h.baseURL,
 			"PageTitle":       "Endpoint Not Found",
 			"PageDescription": "",
@@ -234,24 +262,32 @@ func (h *Handler) serveEndpointUI(w http.ResponseWriter, r *http.Request, id str
 		return
 	}
 
-	currentBody := endpoint.ResponseBody
-	if currentBody == "" {
+	savedBodies, _ := h.db.GetAllResponseBodies(ctx, endpoint.ID)
+	if savedBodies == nil {
+		savedBodies = make(map[string]string)
+	}
+	savedBodiesJSON, _ := json.Marshal(savedBodies)
+
+	currentKey := fmt.Sprintf("%d-%d", endpoint.ResponseStatus, endpoint.ResponseDelay)
+	currentBody, ok := savedBodies[currentKey]
+	if !ok {
 		currentBody = defaultBodyForStatus(endpoint.ResponseStatus, endpoint.ResponseDelay)
 	}
 
 	siblings, _ := h.db.ListEndpointsByIP(ctx, r.RemoteAddr)
 
-	endpointTmpl.Execute(w, map[string]interface{}{
+	render(w, endpointTmpl, map[string]interface{}{
 		"BaseURL":         h.baseURL,
-		"EndpointID":      endpoint.ID,
-		"EndpointURL":     fmt.Sprintf("%s/%s", h.baseURL, endpoint.ID),
+		"EndpointSlug":    endpoint.Slug,
+		"EndpointURL":     fmt.Sprintf("%s/%s", h.baseURL, endpoint.Slug),
 		"CurrentStatus":   endpoint.ResponseStatus,
 		"CurrentDelay":    endpoint.ResponseDelay,
 		"CurrentBody":     currentBody,
+		"SavedBodies":     template.JS(savedBodiesJSON),
 		"RequestCount":    endpoint.RequestCount,
 		"Presets":         responsePresets,
 		"Siblings":        siblings,
-		"PageTitle":       "",
+		"PageTitle":       endpoint.Slug,
 		"PageDescription": "",
 		"CanonicalURL":    h.baseURL + "/",
 	})
@@ -267,14 +303,14 @@ func (h *Handler) TestEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseBody := endpoint.ResponseBody
-	if responseBody == "" {
+	respStatus := endpoint.ResponseStatus
+	responseBody, err := h.db.GetResponseBody(ctx, endpoint.ID, endpoint.ResponseStatus, endpoint.ResponseDelay)
+	if err != nil {
 		responseBody = defaultBodyForStatus(endpoint.ResponseStatus, endpoint.ResponseDelay)
 	}
-	respStatus := endpoint.ResponseStatus
 
-	seq, err2 := h.db.TouchEndpoint(ctx, id)
-	if err2 != nil {
+	seq, err := h.db.TouchEndpoint(ctx, id)
+	if err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -287,7 +323,7 @@ func (h *Handler) TestEndpoint(w http.ResponseWriter, r *http.Request) {
 	})
 
 	req := &db.Request{
-		EndpointID:     id,
+		EndpointID:     endpoint.ID,
 		Seq:            seq,
 		Method:         "POST",
 		Path:           "/",
@@ -319,8 +355,8 @@ func (h *Handler) DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
 	redirect := "/"
 	siblings, _ := h.db.ListEndpointsByIP(ctx, r.RemoteAddr)
 	for _, s := range siblings {
-		if s.ID != id {
-			redirect = "/" + s.ID
+		if s.Slug != id {
+			redirect = "/" + s.Slug
 			break
 		}
 	}
@@ -332,7 +368,11 @@ func (h *Handler) DeleteEndpoint(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	r.ParseForm()
+	r.Body = http.MaxBytesReader(w, r.Body, 64*1024) // 64KB max for config form
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "request too large", http.StatusRequestEntityTooLarge)
+		return
+	}
 	status, _ := strconv.Atoi(r.FormValue("status"))
 	delay, _ := strconv.Atoi(r.FormValue("delay"))
 	body := r.FormValue("body")
@@ -341,14 +381,27 @@ func (h *Handler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
 		status = 200
 	}
 
-	// If body is empty, use the preset default
-	if body == "" {
-		body = defaultBodyForStatus(status, delay)
+	ctx := r.Context()
+
+	endpoint, err := h.db.GetEndpoint(ctx, id)
+	if err != nil {
+		http.Error(w, "endpoint not found", http.StatusNotFound)
+		return
 	}
 
-	if err := h.db.UpdateEndpointConfig(r.Context(), id, status, delay, body); err != nil {
+	if err := h.db.UpdateEndpointConfig(ctx, id, status, delay); err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
+	}
+
+	// Only touch response body if one was explicitly provided
+	if body != "" {
+		defaultBody := defaultBodyForStatus(status, delay)
+		if body == defaultBody {
+			h.db.DeleteResponseBody(ctx, endpoint.ID, status, delay)
+		} else {
+			h.db.UpsertResponseBody(ctx, endpoint.ID, status, delay, body)
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)

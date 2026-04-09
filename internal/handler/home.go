@@ -83,15 +83,15 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
         Test retry logic by toggling between 2xx, 4xx, 5xx, and timeouts.
     </p>
 
-    <form method="POST" action="/endpoints" class="mb-16 flex items-center gap-4">
-        <button type="submit" class="bg-brand hover:brightness-110 text-black font-semibold py-2.5 px-6 rounded-full text-sm transition-all flex-shrink-0">
+    <form method="POST" action="/endpoints" class="mb-10 flex items-center gap-4">
+        <button type="submit" class="bg-brand hover:brightness-110 text-black font-semibold py-2.5 px-6 rounded-full text-base transition-all flex-shrink-0">
             Create Endpoint
         </button>
-        <span class="text-xs text-gray-400 dark:text-dark-text-muted leading-relaxed">Free, no sign-up.<br>All data deleted after 7 days.</span>
+        <span class="text-sm text-gray-500 dark:text-dark-text-secondary leading-relaxed">Free, no sign-up.<br>Data deleted after 7 days of inactivity.</span>
     </form>
 
     <!-- curl example -->
-    <div class="mb-16">
+    <div class="mb-10">
         <pre class="text-sm font-mono bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-xl p-5 overflow-x-auto text-gray-700 dark:text-dark-text-secondary leading-relaxed"><span class="text-gray-400 dark:text-dark-text-muted select-none">$ </span><span class="dark:text-dark-text text-gray-900">curl -X POST https://hooks.apialerts.com/your-endpoint \
   -H "Content-Type: application/json" \
   -d '{"id": 42, "event": "order.completed"}'</span>
@@ -103,8 +103,8 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
     </div>
 
     <!-- Why -->
-    <div class="mb-16">
-        <h2 class="text-lg font-bold dark:text-dark-text mb-3">Why this exists</h2>
+    <div class="mb-10">
+        <h2 class="text-xl font-bold dark:text-dark-text mb-3">Why this exists</h2>
         <p class="text-gray-600 dark:text-dark-text-secondary leading-relaxed mb-3">
             We built this to test webhook delivery for <a href="https://apialerts.com" target="_blank" class="text-brand hover:underline">API Alerts</a>. We needed to know: does our sender actually retry on 5xx? Does it give up on 4xx? Does it handle a 30-second timeout without crashing?
         </p>
@@ -114,8 +114,8 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
     </div>
 
     <!-- What you can do -->
-    <div class="mb-16">
-        <h2 class="text-lg font-bold dark:text-dark-text mb-3">What you can do</h2>
+    <div class="mb-10">
+        <h2 class="text-xl font-bold dark:text-dark-text mb-3">What you can do</h2>
         <ul class="space-y-2 text-gray-600 dark:text-dark-text-secondary">
             <li class="flex gap-3 leading-relaxed"><span class="text-brand font-bold select-none">&rsaquo;</span> Inspect headers, body, query params, and source IP for every request</li>
             <li class="flex gap-3 leading-relaxed"><span class="text-brand font-bold select-none">&rsaquo;</span> Toggle the response: 200, 201, 400, 401, 403, 404, 500, 503, or a 30s timeout</li>
@@ -126,33 +126,33 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
     </div>
 
     <!-- When to use this -->
-    <div class="mb-16">
-        <h2 class="text-lg font-bold dark:text-dark-text mb-5">When to use this</h2>
+    <div class="mb-10">
+        <h2 class="text-xl font-bold dark:text-dark-text mb-5">When to use this</h2>
         <div class="space-y-5">
             <div>
-                <h3 class="text-sm font-bold dark:text-dark-text mb-1">Testing your webhook handler</h3>
-                <p class="text-sm text-gray-500 dark:text-dark-text-muted leading-relaxed">Does your code retry on 500? Give up on 401? Handle a 30-second timeout? Toggle the response and find out.</p>
+                <h3 class="text-base font-bold dark:text-dark-text mb-1">Testing your webhook handler</h3>
+                <p class="text-base text-gray-500 dark:text-dark-text-muted leading-relaxed">Does your code retry on 500? Give up on 401? Handle a 30-second timeout? Toggle the response and find out.</p>
             </div>
             <div>
-                <h3 class="text-sm font-bold dark:text-dark-text mb-1">Previewing payloads before integration</h3>
-                <p class="text-sm text-gray-500 dark:text-dark-text-muted leading-relaxed">Building a Stripe webhook handler? Send a real test event here first to see the exact payload shape before writing a line of code.</p>
+                <h3 class="text-base font-bold dark:text-dark-text mb-1">Previewing payloads before integration</h3>
+                <p class="text-base text-gray-500 dark:text-dark-text-muted leading-relaxed">Building a Stripe webhook handler? Send a real test event here first to see the exact payload shape before writing a line of code.</p>
             </div>
             <div>
-                <h3 class="text-sm font-bold dark:text-dark-text mb-1">Debugging flaky integrations</h3>
-                <p class="text-sm text-gray-500 dark:text-dark-text-muted leading-relaxed">Getting silent failures from a webhook sender? Point it here to see if requests are actually arriving, and what they look like.</p>
+                <h3 class="text-base font-bold dark:text-dark-text mb-1">Debugging flaky integrations</h3>
+                <p class="text-base text-gray-500 dark:text-dark-text-muted leading-relaxed">Getting silent failures from a webhook sender? Point it here to see if requests are actually arriving, and what they look like.</p>
             </div>
             <div>
-                <h3 class="text-sm font-bold dark:text-dark-text mb-1">CI/CD pipeline testing</h3>
-                <p class="text-sm text-gray-500 dark:text-dark-text-muted leading-relaxed">Verify your deploy scripts send the right webhook notifications without spamming your real Slack channel.</p>
+                <h3 class="text-base font-bold dark:text-dark-text mb-1">CI/CD pipeline testing</h3>
+                <p class="text-base text-gray-500 dark:text-dark-text-muted leading-relaxed">Verify your deploy scripts send the right webhook notifications without spamming your real Slack channel.</p>
             </div>
         </div>
     </div>
 
     <!-- Details -->
-    <div class="mb-16 grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-8 text-sm">
+    <div class="mb-10 grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-8 text-base">
         <div>
             <h3 class="font-bold dark:text-dark-text mb-2">Limits</h3>
-            <ul class="space-y-1 text-gray-500 dark:text-dark-text-muted">
+            <ul class="space-y-1.5 text-gray-500 dark:text-dark-text-muted">
                 <li>5 endpoints per IP</li>
                 <li>50 requests stored per endpoint</li>
                 <li>60 requests/min rate limit</li>
@@ -162,7 +162,7 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
         </div>
         <div>
             <h3 class="font-bold dark:text-dark-text mb-2">Privacy</h3>
-            <ul class="space-y-1 text-gray-500 dark:text-dark-text-muted">
+            <ul class="space-y-1.5 text-gray-500 dark:text-dark-text-muted">
                 <li>No sign-up or accounts</li>
                 <li>No cookies or analytics</li>
                 <li>No third-party tracking</li>
@@ -173,24 +173,25 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
     </div>
 
     <!-- Open source -->
-    <div class="text-sm text-gray-500 dark:text-dark-text-muted border-t border-gray-200 dark:border-dark-border pt-8">
+    <div class="text-base text-gray-500 dark:text-dark-text-muted mb-10">
         <p>
             MIT licensed. Single Go binary, Postgres, HTMX. No JavaScript frameworks.
-            <a href="https://github.com/apialerts/hooks" target="_blank" class="text-brand hover:underline">View on GitHub</a> or self-host with <code class="text-xs bg-gray-100 dark:bg-dark-surface-high px-1.5 py-0.5 rounded">docker compose up</code>.
+            <a href="https://github.com/apialerts/hooks" target="_blank" class="text-brand hover:underline">View on GitHub</a> or self-host with <code class="text-sm bg-gray-100 dark:bg-dark-surface-high px-1.5 py-0.5 rounded">docker compose up</code>.
         </p>
     </div>
 
     <!-- API Alerts -->
-    <div class="mt-8 rounded-xl bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border px-5 py-4">
-        <p class="text-sm text-gray-600 dark:text-dark-text-secondary">
-            Want to send a push notification, webhook, SMS, WhatsApp message, and more from a single API call? Check out our main product, <a href="https://apialerts.com" target="_blank" class="text-brand hover:underline font-semibold">API Alerts</a>.
-        </p>
+    <div class="rounded-xl bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border px-8 py-6 text-center">
+        <p class="text-sm font-semibold tracking-widest uppercase text-gray-400 dark:text-dark-text-muted mb-2">From the makers of</p>
+        <h3 class="text-2xl font-bold dark:text-dark-text mb-3">API Alerts</h3>
+        <p class="text-base text-gray-600 dark:text-dark-text-secondary leading-relaxed mb-6">Need full push notifications from your APIs, CI/CD pipelines, or scripts? API Alerts delivers real-time alerts straight to your phone with one line of code.</p>
+        <a href="https://apialerts.com" target="_blank" class="inline-block text-base font-semibold bg-brand text-black rounded-full px-6 py-2.5 hover:brightness-110 transition-all">Visit apialerts.com</a>
     </div>
 </main>
 ` + layoutEnd))
 
 func (h *Handler) Home(w http.ResponseWriter, r *http.Request) {
-	homeTmpl.Execute(w, map[string]interface{}{
+	render(w, homeTmpl, map[string]interface{}{
 		"BaseURL":         h.baseURL,
 		"PageTitle":       "Free Webhook Tester",
 		"PageDescription": "Free webhook testing tool. Generate a unique URL, inspect incoming requests, and toggle between success, error, and timeout responses to test your retry logic. Open source, no sign-up required.",
@@ -204,8 +205,8 @@ var limitTmpl = template.Must(template.New("limit").Parse(layoutStart + `
     <p class="text-gray-600 dark:text-dark-text-secondary mb-6 leading-relaxed">You already have 5 endpoints, which is the maximum per IP address. Delete one to create a new one.</p>
     <div class="space-y-2">
         {{range .Endpoints}}
-        <a href="/{{.ID}}" class="flex items-center justify-between px-4 py-3 rounded-xl bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-text-muted transition-colors group">
-            <code class="text-sm font-mono text-gray-700 dark:text-dark-text">{{.ID}}</code>
+        <a href="/{{.Slug}}" class="flex items-center justify-between px-4 py-3 rounded-xl bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border hover:border-gray-300 dark:hover:border-dark-text-muted transition-colors group">
+            <code class="text-sm font-mono text-gray-700 dark:text-dark-text">{{.Slug}}</code>
             <svg class="w-4 h-4 text-gray-300 dark:text-dark-border group-hover:text-gray-400 dark:group-hover:text-dark-text-muted transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
         </a>
         {{end}}
@@ -225,7 +226,7 @@ func (h *Handler) CreateEndpoint(w http.ResponseWriter, r *http.Request) {
 	if count >= 5 {
 		endpoints, _ := h.db.ListEndpointsByIP(ctx, ip)
 		w.WriteHeader(http.StatusTooManyRequests)
-		limitTmpl.Execute(w, map[string]interface{}{
+		render(w, limitTmpl, map[string]interface{}{
 			"BaseURL":         h.baseURL,
 			"Endpoints":       endpoints,
 			"PageTitle":       "Endpoint Limit Reached",

@@ -1,8 +1,18 @@
 package handler
 
 import (
+	"html/template"
+	"log"
+	"net/http"
+
 	"github.com/apialerts/hooks/internal/db"
 )
+
+func render(w http.ResponseWriter, tmpl *template.Template, data interface{}) {
+	if err := tmpl.Execute(w, data); err != nil {
+		log.Printf("template error: %v", err)
+	}
+}
 
 var reservedPaths = map[string]bool{
 	"privacy":     true,

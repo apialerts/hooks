@@ -14,8 +14,8 @@ type RateLimiter struct {
 }
 
 type counter struct {
-	count    int
-	resetAt  time.Time
+	count   int
+	resetAt time.Time
 }
 
 func NewRateLimiter() *RateLimiter {
