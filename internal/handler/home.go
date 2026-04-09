@@ -28,18 +28,66 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
     }
 }
 </script>
-<main class="max-w-2xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+        {
+            "@type": "Question",
+            "name": "What is a webhook tester?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A webhook tester gives you a unique URL that receives HTTP requests and logs them for inspection. You can see the full request headers, body, query parameters, and source IP. This tool also lets you control what response is sent back, so you can test how your code handles different status codes like 200, 400, 500, and timeouts."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "How do I test webhooks locally?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Create an endpoint at hooks.apialerts.com to get a public URL. Point your webhook sender at that URL. Incoming requests appear in real time. You can also self-host this tool with Docker for fully local testing: docker compose up."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Can I simulate webhook failures?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. Use the response mode dropdown to toggle between 200 OK, 400 Bad Request, 401 Unauthorized, 500 Internal Server Error, 503 Service Unavailable, and a 30-second timeout. Each preset returns a realistic JSON response body that you can also customize."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "Is this tool free?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, completely free. No sign-up, no accounts, no usage limits beyond basic rate limiting. The tool is also open source under the MIT license and can be self-hosted."
+            }
+        },
+        {
+            "@type": "Question",
+            "name": "How long is webhook data stored?",
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Endpoints and their request data are automatically deleted after 7 days of inactivity. There is no way to recover deleted data. We do not create backups of endpoint data."
+            }
+        }
+    ]
+}
+</script>
+<main class="max-w-2xl mx-auto px-4 sm:px-6 py-16 sm:py-24 overflow-x-hidden w-full min-w-0">
     <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight dark:text-dark-text mb-4">Webhook Tester</h1>
     <p class="text-gray-600 dark:text-dark-text-secondary leading-relaxed mb-8">
         Get a URL. Send webhooks to it. See what arrives. Control what comes back.<br>
         Test retry logic by toggling between 2xx, 4xx, 5xx, and timeouts.
     </p>
 
-    <form method="POST" action="/endpoints" class="mb-16">
-        <button type="submit" class="bg-brand hover:brightness-110 text-black font-semibold py-2.5 px-6 rounded-full text-sm transition-all">
+    <form method="POST" action="/endpoints" class="mb-16 flex items-center gap-4">
+        <button type="submit" class="bg-brand hover:brightness-110 text-black font-semibold py-2.5 px-6 rounded-full text-sm transition-all flex-shrink-0">
             Create Endpoint
         </button>
-        <span class="ml-3 text-xs text-gray-400 dark:text-dark-text-muted">Free, no sign-up. All data deleted after 7 days.</span>
+        <span class="text-xs text-gray-400 dark:text-dark-text-muted leading-relaxed">Free, no sign-up.<br>All data deleted after 7 days.</span>
     </form>
 
     <!-- curl example -->
@@ -75,6 +123,29 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
             <li class="flex gap-3 leading-relaxed"><span class="text-brand font-bold select-none">&rsaquo;</span> Send a test request from the browser without leaving the page</li>
             <li class="flex gap-3 leading-relaxed"><span class="text-brand font-bold select-none">&rsaquo;</span> Copy or download the full request/response transaction as plain text</li>
         </ul>
+    </div>
+
+    <!-- When to use this -->
+    <div class="mb-16">
+        <h2 class="text-lg font-bold dark:text-dark-text mb-5">When to use this</h2>
+        <div class="space-y-5">
+            <div>
+                <h3 class="text-sm font-bold dark:text-dark-text mb-1">Testing your webhook handler</h3>
+                <p class="text-sm text-gray-500 dark:text-dark-text-muted leading-relaxed">Does your code retry on 500? Give up on 401? Handle a 30-second timeout? Toggle the response and find out.</p>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold dark:text-dark-text mb-1">Previewing payloads before integration</h3>
+                <p class="text-sm text-gray-500 dark:text-dark-text-muted leading-relaxed">Building a Stripe webhook handler? Send a real test event here first to see the exact payload shape before writing a line of code.</p>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold dark:text-dark-text mb-1">Debugging flaky integrations</h3>
+                <p class="text-sm text-gray-500 dark:text-dark-text-muted leading-relaxed">Getting silent failures from a webhook sender? Point it here to see if requests are actually arriving, and what they look like.</p>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold dark:text-dark-text mb-1">CI/CD pipeline testing</h3>
+                <p class="text-sm text-gray-500 dark:text-dark-text-muted leading-relaxed">Verify your deploy scripts send the right webhook notifications without spamming your real Slack channel.</p>
+            </div>
+        </div>
     </div>
 
     <!-- Details -->

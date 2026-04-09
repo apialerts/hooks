@@ -34,8 +34,8 @@ func (h *Handler) receiveWebhook(w http.ResponseWriter, r *http.Request, id stri
 	headers, _ := json.Marshal(r.Header)
 
 	path := chi.URLParam(r, "*")
-	if path == "" {
-		path = "/"
+	if path == "" || path == "/" {
+		path = ""
 	}
 
 	responseBody := endpoint.ResponseBody

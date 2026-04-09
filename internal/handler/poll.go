@@ -16,8 +16,8 @@ import (
 )
 
 var requestListTmpl = template.Must(template.New("request_list").Funcs(template.FuncMap{
-	"formatTime": func(t time.Time) string {
-		return t.Format("15:04:05")
+	"isoTime": func(t time.Time) string {
+		return t.UTC().Format(time.RFC3339)
 	},
 	"formatSize": func(size int) string {
 		if size < 1024 {
@@ -74,7 +74,7 @@ var requestListTmpl = template.Must(template.New("request_list").Funcs(template.
          hx-swap="innerHTML"
          onclick="if(this.style.borderLeft){return false}document.querySelectorAll('.request-item').forEach(function(el){el.style.borderLeft='';el.style.backgroundColor=''});this.style.borderLeft='2px solid #e8772e';this.style.backgroundColor='rgba(232,119,46,0.08)'">
         <span class="px-2 py-0.5 rounded-md text-[11px] font-bold w-14 text-center tracking-wide {{methodColor .Method}}">{{.Method}}</span>
-        <span class="text-xs font-mono text-gray-400 dark:text-dark-text-muted">{{formatTime .ReceivedAt}}</span>
+        <time class="text-xs font-mono text-gray-400 dark:text-dark-text-muted local-time" datetime="{{isoTime .ReceivedAt}}">{{isoTime .ReceivedAt}}</time>
         {{if .ResponseStatus}}<span class="text-xs font-mono font-bold {{statusColor .ResponseStatus}}">{{derefStatus .ResponseStatus}}</span>{{end}}
         <span class="text-[11px] text-gray-400 dark:text-dark-text-muted ml-auto">{{formatSize .BodySize}}</span>
         <svg class="w-3.5 h-3.5 text-gray-300 dark:text-dark-border group-hover:text-gray-400 dark:group-hover:text-dark-text-muted transition-colors flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
@@ -88,11 +88,17 @@ var requestListTmpl = template.Must(template.New("request_list").Funcs(template.
     <p class="text-xs text-gray-400 dark:text-dark-text-muted">Send a webhook to your endpoint URL</p>
 </div>
 {{end}}
+<script>
+document.querySelectorAll('.local-time').forEach(function(el) {
+    var d = new Date(el.getAttribute('datetime'));
+    el.textContent = d.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+});
+</script>
 `))
 
 var requestDetailTmpl = template.Must(template.New("request_detail").Funcs(template.FuncMap{
-	"formatTime": func(t time.Time) string {
-		return t.Format("2006-01-02 15:04:05")
+	"isoTime": func(t time.Time) string {
+		return t.UTC().Format(time.RFC3339)
 	},
 	"formatHeaderRows": func(raw []byte) []map[string]string {
 		var headers map[string][]string
@@ -169,7 +175,7 @@ var requestDetailTmpl = template.Must(template.New("request_detail").Funcs(templ
 			b.WriteString(fmt.Sprintf("Response: %d\n", *r.ResponseStatus))
 		}
 		b.WriteString(fmt.Sprintf("Source: %s\n", r.SourceIP))
-		b.WriteString(fmt.Sprintf("Received: %s\n", r.ReceivedAt.Format("Mon Jan 02 15:04:05 MST 2006")))
+		b.WriteString(fmt.Sprintf("Received: %s\n", r.ReceivedAt.UTC().Format(time.RFC3339)))
 		b.WriteString(fmt.Sprintf("\nRequest size: %dB\n", r.BodySize))
 		if r.ResponseBody != "" {
 			b.WriteString(fmt.Sprintf("Response size: %dB\n", len(r.ResponseBody)))
@@ -229,10 +235,10 @@ var requestDetailTmpl = template.Must(template.New("request_detail").Funcs(templ
             {{if .Request.ResponseStatus}}<span class="text-xs font-bold font-mono flex-shrink-0 {{statusColor .Request.ResponseStatus}}">{{derefStatus .Request.ResponseStatus}}</span>{{end}}
         </div>
         <div class="flex items-center gap-1 flex-shrink-0">
-            <button onclick="navigator.clipboard.writeText(document.getElementById('transaction-text').textContent)"
+            <button onclick="var b=this;navigator.clipboard.writeText(document.getElementById('transaction-text').textContent);var o=b.innerHTML;b.innerHTML='<svg class=\'w-3 h-3 text-green-500\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\' stroke-width=\'2\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M5 13l4 4L19 7\'/></svg><span>Copied</span>';setTimeout(function(){b.innerHTML=o},1500)"
                     class="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-dark-text-muted hover:text-gray-700 dark:hover:text-dark-text px-2.5 py-1.5 border border-gray-200 dark:border-dark-border rounded-lg transition-colors hover:bg-gray-50 dark:hover:bg-dark-surface-high font-medium">
                 <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
-                Copy
+                <span>Copy</span>
             </button>
             <button onclick="downloadTransaction()"
                     class="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-dark-text-muted hover:text-gray-700 dark:hover:text-dark-text px-2.5 py-1.5 border border-gray-200 dark:border-dark-border rounded-lg transition-colors hover:bg-gray-50 dark:hover:bg-dark-surface-high font-medium">
@@ -253,6 +259,13 @@ function downloadTransaction() {
     a.click();
     URL.revokeObjectURL(a.href);
 }
+(function() {
+    var pre = document.getElementById('transaction-text');
+    if (!pre) return;
+    pre.textContent = pre.textContent.replace(/Received: (\d{4}-\d{2}-\d{2}T[^\n]+)/, function(_, iso) {
+        return 'Received: ' + new Date(iso).toLocaleString();
+    });
+})();
 </script>
 `))
 

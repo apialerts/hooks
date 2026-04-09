@@ -20,7 +20,7 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
     <div class="inline-flex items-center gap-2 mb-1.5 self-start">
         <div class="inline-flex items-center gap-3 rounded-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border px-3 py-2">
             <code class="text-sm font-mono text-gray-700 dark:text-dark-text">{{.EndpointURL}}</code>
-            <button onclick="navigator.clipboard.writeText('{{.EndpointURL}}')"
+            <button onclick="copyText('{{.EndpointURL}}', this)"
                     class="text-gray-400 dark:text-dark-text-muted hover:text-gray-600 dark:hover:text-dark-text-secondary transition-colors flex-shrink-0" title="Copy URL">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
             </button>
@@ -54,28 +54,26 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
     <!-- Response config -->
     <p class="text-xs font-medium text-gray-600 dark:text-dark-text-secondary mb-1.5">Choose how this endpoint responds to incoming webhooks</p>
     <div class="rounded-xl bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border mb-4">
-        <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-dark-border">
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-medium text-gray-500 dark:text-dark-text-muted">Response</span>
-                <select id="response-mode" onchange="onPresetChange()"
-                        class="text-xs font-semibold dark:text-dark-text bg-gray-50 dark:bg-dark-surface-high rounded-lg px-2.5 py-1.5 border border-gray-200 dark:border-dark-border focus:outline-none cursor-pointer">
-                    {{range .Presets}}
-                    <option value="{{.Status}}-{{.Delay}}" data-body="{{.DefaultBody}}"
-                            class="bg-white dark:bg-dark-surface"
-                            {{if and (eq .Status $.CurrentStatus) (eq .Delay $.CurrentDelay)}}selected{{end}}>
-                        {{.Label}}
-                    </option>
-                    {{end}}
-                </select>
-            </div>
-            <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-gray-100 dark:border-dark-border">
+            <span class="text-xs font-medium text-gray-500 dark:text-dark-text-muted">Response</span>
+            <select id="response-mode" onchange="onPresetChange()"
+                    class="text-xs font-semibold dark:text-dark-text bg-gray-50 dark:bg-dark-surface-high rounded-lg pl-2.5 pr-8 py-1.5 border border-gray-200 dark:border-dark-border focus:outline-none cursor-pointer flex-1 min-w-[140px]">
+                {{range .Presets}}
+                <option value="{{.Status}}-{{.Delay}}" data-body="{{.DefaultBody}}"
+                        class="bg-white dark:bg-dark-surface"
+                        {{if and (eq .Status $.CurrentStatus) (eq .Delay $.CurrentDelay)}}selected{{end}}>
+                    {{.Label}}
+                </option>
+                {{end}}
+            </select>
+            <div class="flex items-center gap-2 ml-auto">
                 <button onclick="testEndpoint()"
-                        class="text-xs font-semibold text-gray-900 dark:text-dark-text px-3 py-1 rounded-full border border-gray-300 dark:border-dark-text-muted hover:bg-gray-50 dark:hover:bg-dark-surface-high transition-colors">
+                        class="text-xs font-semibold text-gray-900 dark:text-dark-text px-3 py-1 rounded-full border border-gray-300 dark:border-dark-text-muted hover:bg-gray-50 dark:hover:bg-dark-surface-high transition-colors whitespace-nowrap">
                     Send Test
                 </button>
                 <button onclick="saveConfig()"
-                        class="bg-brand hover:brightness-110 text-black text-xs font-semibold px-3.5 py-1 rounded-full transition-all">
-                    Save Response
+                        class="bg-brand hover:brightness-110 text-black text-xs font-semibold px-3.5 py-1 rounded-full transition-all whitespace-nowrap">
+                    Save
                 </button>
             </div>
         </div>
@@ -88,6 +86,13 @@ var endpointTmpl = template.Must(template.New("endpoint").Parse(layoutStart + `
     <script>
         var currentStatus = '{{.CurrentStatus}}';
         var currentDelay = '{{.CurrentDelay}}';
+
+        function copyText(text, btn) {
+            navigator.clipboard.writeText(text);
+            var orig = btn.innerHTML;
+            btn.innerHTML = '<svg class="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+            setTimeout(function() { btn.innerHTML = orig; }, 1500);
+        }
 
         function resetCountdown() {
             var bar = document.getElementById('countdown-bar');
