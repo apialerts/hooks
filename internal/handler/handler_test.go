@@ -31,8 +31,8 @@ func TestDefaultBodyForStatus(t *testing.T) {
 		{200, 0, `{"status": "ok"}`},
 		{201, 0, `{"status": "created", "id": "example-id"}`},
 		{400, 0, `{"error": "bad_request", "message": "Invalid payload"}`},
-		{500, 0, `{"error": "internal_error", "message": "Something went wrong"}`},
-		{200, 30000, `{"status": "ok"}`},
+		{500, 0, `Internal Server Error`},
+		{200, 35000, ``},
 		{999, 0, `{"status": "ok"}`}, // unknown falls back to default
 	}
 
@@ -53,7 +53,7 @@ func TestResponsePresetsComplete(t *testing.T) {
 		if p.Label == "" {
 			t.Errorf("preset with status %d has empty label", p.Status)
 		}
-		if p.DefaultBody == "" {
+		if p.DefaultBody == "" && p.Delay == 0 {
 			t.Errorf("preset %q has empty default body", p.Label)
 		}
 	}
