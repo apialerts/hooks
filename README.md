@@ -2,49 +2,47 @@
 
 Free, open-source webhook testing tool. Generate a unique URL, inspect incoming requests, and toggle between success/failure responses to test your retry logic.
 
-Built by [API Alerts](https://apialerts.com).
+**Live at [hooks.apialerts.com](https://hooks.apialerts.com)** | Built by [API Alerts](https://apialerts.com)
 
-## Quick Start
+## Quick Start (Docker)
 
 ```bash
 docker compose up --build
 ```
 
-Open [http://localhost:8080](http://localhost:8080). Click "Create Endpoint" to get a unique URL like `http://localhost:8080/brave-lazy-fox`. Send webhooks to it and watch them appear in the request log.
+Open [http://localhost:3080](http://localhost:3080).
 
-## How It Works
+## Quick Start (Local)
 
-Each endpoint has a **dual-purpose URL**:
-- **Browser** (GET with `Accept: text/html`) — serves the endpoint UI
-- **Any other request** (POST, PUT, DELETE, etc.) — webhook receiver, logs the request and returns the configured response
+Requires Go 1.26+ and a Postgres instance.
 
-### Features
+```bash
+# Start just the database
+docker compose up db -d
 
-- **Request inspector** — view method, headers, body (formatted JSON), query params, source IP
-- **Response mode dropdown** — toggle between 200, 201, 400, 401, 403, 404, 500, 503, and timeout (30s)
-- **Custom response body** — each preset has a default JSON body, editable per endpoint
-- **Transaction log** — Chucker-style plain text view with Copy and Download buttons
-- **Auto-refresh** — 30-second polling with countdown bar and "Refresh Now" button
+# Run the server
+make dev
+```
+
+Open [http://localhost:3080](http://localhost:3080).
+
+## Features
+
+- **Request inspector** — headers, body, query params, source IP for every request
+- **Response mode toggle** — 200, 201, 400, 401, 403, 404, 500, 503, or 30s timeout
+- **Custom response body** — each preset has a sensible JSON default, fully editable
+- **Transaction log** — plain text request/response view, copy or download as `.txt`
+- **Auto-refresh** — 30-second polling with countdown bar and manual refresh
 - **Test button** — send a sample request without leaving the browser
-- **Delete button** — instantly delete endpoint and all data
-- **Dark mode** — toggle with moon/sun icon, matches API Alerts branding
-- **No sign-up** — fully anonymous, endpoints persist for 14 days from last activity
-
-### Limits
-
-- 500 requests stored per endpoint (oldest trimmed)
-- 60 requests/minute rate limit per endpoint
-- 256KB max payload size
-- 5 endpoints per IP address
-- 14-day expiry from last activity
+- **Dark mode** — toggle between light and dark themes
+- **No sign-up** — fully anonymous, endpoints expire after 7 days of inactivity
 
 ## Tech Stack
 
-- **Go** — Chi router, single binary
-- **Postgres** — via pgx, migrations via Goose
+- **Go** — Chi router, single binary with embedded assets
+- **Postgres** — via pgx, migrations via Goose (run automatically on startup)
 - **HTMX** — polling and partial page updates
-- **Tailwind CSS** — via CDN (dev), standalone CLI (production)
-- **No Node.js, no React, no SPA**
+- **Tailwind CSS** — compiled via standalone CLI (no Node.js required)
 
 ## Project Structure
 
@@ -52,73 +50,32 @@ Each endpoint has a **dual-purpose URL**:
 hooks/
 ├── cmd/server/
 │   ├── main.go                 # Entry point, router, config, graceful shutdown
-│   └── static/                 # Embedded assets (favicon, HTMX, CSS)
+│   └── static/                 # Embedded assets (favicon, HTMX, compiled CSS)
 ├── internal/
-│   ├── handler/
-│   │   ├── handler.go          # Response presets, reserved paths
-│   │   ├── layout.go           # Shared HTML layout (header, footer, dark mode, branding)
-│   │   ├── home.go             # GET / (landing page), POST /endpoints (create)
-│   │   ├── endpoint.go         # GET /{id} (UI), PUT /{id}/config, DELETE /{id}/delete, POST /{id}/test
-│   │   ├── webhook.go          # ANY /{id} (webhook receiver)
-│   │   ├── poll.go             # GET /{id}/requests (list), GET /{id}/requests/{seq} (detail)
-│   │   ├── static.go           # Privacy page, 404, robots.txt, sitemap.xml
-│   │   └── slug.go             # Random word URL generator (petname)
-│   ├── db/
-│   │   ├── db.go               # Postgres connection + Goose migration runner
-│   │   ├── endpoints.go        # Endpoint CRUD queries
-│   │   ├── requests.go         # Request CRUD queries
-│   │   └── migrations/         # SQL migrations (Goose)
-│   ├── cleanup/
-│   │   └── cleanup.go          # Background goroutine, purges endpoints inactive 14+ days
-│   └── middleware/
-│       └── ratelimit.go        # Per-endpoint + per-IP rate limiting
-├── docker-compose.yml          # Go app + Postgres (one command setup)
-├── Dockerfile                  # Multi-stage build (~30MB image)
-└── Makefile                    # dev, build, migrate, docker commands
+│   ├── handler/                # HTTP handlers and HTML templates
+│   ├── db/                     # Postgres queries and Goose migrations
+│   ├── cleanup/                # Background expired endpoint purge
+│   └── middleware/             # Rate limiting, CORS
+├── input.css                   # Tailwind source (v4 syntax)
+├── tailwind.config.js          # Tailwind config
+├── docker-compose.yml          # Local dev (Go app + Postgres)
+├── Dockerfile                  # Multi-stage production build
+└── Makefile
 ```
-
-## Routes
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/` | Landing page |
-| POST | `/endpoints` | Create new endpoint, redirect to `/{id}` |
-| GET | `/privacy` | Privacy policy |
-| GET | `/health` | Health check |
-| GET | `/{id}` | Endpoint UI (browser) or webhook receiver (API) |
-| POST/PUT/PATCH/DELETE | `/{id}` | Webhook receiver — logs request, returns configured response |
-| PUT | `/{id}/config` | Update response mode and body |
-| POST | `/{id}/test` | Send a test request to the endpoint |
-| DELETE | `/{id}/delete` | Delete endpoint and all data |
-| GET | `/{id}/requests` | HTMX fragment: request list (polled every 30s) |
-| GET | `/{id}/requests/{seq}` | HTMX fragment: request detail (transaction view) |
-
-## Database
-
-Two tables, managed by Goose migrations:
-
-**endpoints** — webhook endpoint configuration
-- `id` (text PK) — human-readable slug (e.g. `brave-lazy-fox`)
-- `creator_ip` — for per-IP rate limiting
-- `response_status` — HTTP status to return (default 200)
-- `response_delay_ms` — delay before responding (for timeout testing)
-- `response_body` — custom JSON response body
-- `request_count` — atomic counter, used for per-endpoint sequence numbers
-- `last_activity_at` — updated on each webhook, used for 14-day expiry
-
-**requests** — logged webhook requests
-- `seq` — per-endpoint sequence number (1, 2, 3...)
-- `method`, `path`, `query_params`, `headers`, `body` — incoming request data
-- `response_status`, `response_body` — what was sent back
-- `source_ip`, `content_type`, `body_size` — metadata
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `8080` | Server port |
+| `PORT` | `3080` | Server port |
 | `DATABASE_URL` | `postgres://hooks:hooks@localhost:5432/hooks?sslmode=disable` | Postgres connection string |
-| `BASE_URL` | `http://localhost:{PORT}` | Public URL (for display and transaction logs) |
+| `DB_USER` | — | Alternative: Postgres user (used if `DATABASE_URL` is not set) |
+| `DB_PASSWORD` | — | Alternative: Postgres password |
+| `DB_HOST` | — | Alternative: Postgres host |
+| `DB_NAME` | — | Alternative: Postgres database name |
+| `BASE_URL` | `http://localhost:{PORT}` | Public URL (used in templates and transaction logs) |
+
+When `DATABASE_URL` is not set but `DB_USER`, `DB_PASSWORD`, `DB_HOST`, and `DB_NAME` are all provided, the connection string is built as `postgres://{user}:{password}@{host}:5432/{name}?sslmode=require`.
 
 ## Development
 
@@ -126,30 +83,108 @@ Two tables, managed by Goose migrations:
 # Start Postgres
 docker compose up db -d
 
-# Run the server
+# Run the server (auto-reloads on restart)
 make dev
 
-# Or build and run
-make build
-./bin/hooks
+# Run tests
+make test
+
+# Rebuild Tailwind CSS after template changes
+make css
+
+# Watch Tailwind CSS during development
+make css-watch
+
+# Update vendored HTMX
+make update-htmx HTMX_VERSION=2.0.4
 ```
 
-## Deployment (Cloud Run)
+## Self-Hosting
 
-Single Go binary, connects to Cloud SQL Postgres. Stateless, scales to zero.
+### Docker Compose (recommended)
+
+```bash
+docker compose up --build -d
+```
+
+Runs the Go app and Postgres together on port 3080. Data persists in a Docker volume.
+
+### Docker (bring your own Postgres)
 
 ```bash
 docker build -t hooks .
-# Deploy to Cloud Run with DATABASE_URL and BASE_URL env vars
+
+docker run -p 3080:3080 \
+  -e DATABASE_URL="postgres://user:pass@your-db:5432/hooks?sslmode=require" \
+  -e BASE_URL="https://hooks.yourdomain.com" \
+  hooks
 ```
+
+### VPS (DigitalOcean, Hetzner, etc.)
+
+SSH into your server, clone the repo, and run Docker Compose:
+
+```bash
+git clone https://github.com/apialerts/hooks.git
+cd hooks
+BASE_URL=https://hooks.yourdomain.com docker compose up --build -d
+```
+
+Point your domain's DNS to the server IP. Use a reverse proxy like Caddy or nginx for HTTPS — Caddy handles SSL certificates automatically:
+
+```
+# Caddyfile
+hooks.yourdomain.com {
+    reverse_proxy localhost:3080
+}
+```
+
+### Cloud Run
+
+```bash
+# Build and push
+gcloud builds submit --tag gcr.io/YOUR_PROJECT/hooks --project YOUR_PROJECT
+
+# Deploy
+gcloud run deploy hooks \
+  --image gcr.io/YOUR_PROJECT/hooks \
+  --region us-central1 \
+  --project YOUR_PROJECT \
+  --allow-unauthenticated \
+  --set-env-vars "DATABASE_URL=postgres://...,BASE_URL=https://hooks.yourdomain.com"
+```
+
+Cloud Run sets the `PORT` env var automatically. The app is stateless and scales to zero.
+
+**Connecting to Cloud SQL:** Use the built-in Cloud SQL connector rather than a public IP. Add the `--add-cloudsql-instances` flag and use the Unix socket path as the host:
+
+```bash
+gcloud run deploy hooks \
+  --image gcr.io/YOUR_PROJECT/hooks \
+  --region us-central1 \
+  --project YOUR_PROJECT \
+  --allow-unauthenticated \
+  --add-cloudsql-instances YOUR_PROJECT:us-central1:YOUR_INSTANCE \
+  --set-env-vars "DATABASE_URL=postgres://user:pass@/hooks?host=/cloudsql/YOUR_PROJECT:us-central1:YOUR_INSTANCE,BASE_URL=https://hooks.yourdomain.com"
+```
+
+Alternatively, enable a [VPC connector](https://cloud.google.com/vpc/docs/configure-serverless-vpc-access) on the Cloud Run service and use the Cloud SQL private IP directly in `DATABASE_URL`.
+
+## Limits
+
+- 5 endpoints per IP address
+- 50 requests stored per endpoint
+- 60 requests/minute rate limit per endpoint
+- 256KB max request payload
+- 7-day expiry from last activity
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Attribution
 
-Built with these open-source projects:
+Built with:
 
 - [Chi](https://github.com/go-chi/chi) — HTTP router
 - [pgx](https://github.com/jackc/pgx) — PostgreSQL driver

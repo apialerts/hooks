@@ -45,7 +45,7 @@ update-htmx:
 
 # Tailwind (requires tailwindcss standalone CLI)
 css:
-	tailwindcss -i ./static/input.css -o ./static/styles.css --minify
+	./tailwindcss -i input.css -o cmd/server/static/styles.css --minify
 
 css-watch:
-	tailwindcss -i ./static/input.css -o ./static/styles.css --watch
+	./tailwindcss -i input.css -o cmd/server/static/styles.css --watch

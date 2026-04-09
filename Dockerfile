@@ -13,5 +13,5 @@ FROM alpine:3.21
 RUN apk --no-cache add ca-certificates
 COPY --from=builder /hooks /hooks
 
-EXPOSE 8080
+EXPOSE 3080
 CMD ["/hooks"]

@@ -34,32 +34,6 @@ const layoutStart = `<!DOCTYPE html>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="/static/htmx.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-    tailwind.config = {
-        darkMode: 'class',
-        theme: {
-            extend: {
-                fontFamily: {
-                    sans: ['Mulish', 'system-ui', 'sans-serif'],
-                },
-                colors: {
-                    brand: '#e8772e',
-                    dark: {
-                        bg: '#1c1c1c',
-                        surface: '#252525',
-                        'surface-high': '#2e2e2e',
-                        'surface-highest': '#3a3a3a',
-                        border: '#383838',
-                        text: '#e5e5e5',
-                        'text-secondary': '#a0a0a0',
-                        'text-muted': '#6e6e6e',
-                    }
-                }
-            }
-        }
-    }
-    </script>
     <script>
         const scheme = localStorage.getItem('scheme') ?? 'dark';
         if (scheme === 'dark') document.documentElement.classList.add('dark');

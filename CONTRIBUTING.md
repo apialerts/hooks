@@ -28,7 +28,7 @@ docker compose up db -d
 make dev
 ```
 
-4. Open [http://localhost:8080](http://localhost:8080) in your browser.
+4. Open [http://localhost:3080](http://localhost:3080) in your browser.
 
 ## Running Tests
 
@@ -47,7 +47,7 @@ hooks/
 │   ├── handler/         # HTTP handlers and HTML templates
 │   ├── db/              # Postgres queries and migrations
 │   ├── cleanup/         # Background expiry job
-│   └── middleware/       # Rate limiting
+│   └── middleware/       # Rate limiting, CORS
 ├── docker-compose.yml
 ├── Dockerfile
 └── Makefile
@@ -78,7 +78,7 @@ go build ./...
 
 - Follow standard Go conventions (`gofmt`).
 - Keep HTML templates inline in handler files — no template engine.
-- Tailwind CSS via CDN in development, standalone CLI for production builds.
+- Tailwind CSS compiled via standalone CLI (`make css` to rebuild after template changes).
 
 ## What to Contribute
 
