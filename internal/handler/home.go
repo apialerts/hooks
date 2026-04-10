@@ -85,7 +85,7 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
 
     <form method="POST" action="/endpoints" class="mb-10 flex items-center gap-4">
         <button type="submit" class="bg-brand hover:brightness-110 text-black font-semibold py-2.5 px-6 rounded-full text-base transition-all flex-shrink-0">
-            Create Endpoint
+            Get a URL
         </button>
         <span class="text-sm text-gray-500 dark:text-dark-text-secondary leading-relaxed">Free, no sign-up.<br>Data deleted after 7 days of inactivity.</span>
     </form>
@@ -171,6 +171,14 @@ var homeTmpl = template.Must(template.New("home").Parse(layoutStart + `
             </ul>
         </div>
     </div>
+
+    <!-- Secondary CTA -->
+    <form method="POST" action="/endpoints" class="mb-10 flex items-center gap-4">
+        <button type="submit" class="bg-brand hover:brightness-110 text-black font-semibold py-2.5 px-6 rounded-full text-base transition-all flex-shrink-0">
+            Get a URL
+        </button>
+        <span class="text-sm text-gray-500 dark:text-dark-text-secondary leading-relaxed">Ready to have a play?<br>Grab a URL, fire off a test, see what happens.</span>
+    </form>
 
     <!-- Open source -->
     <div class="text-base text-gray-500 dark:text-dark-text-muted mb-10">

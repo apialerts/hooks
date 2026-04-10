@@ -83,5 +83,5 @@ func (h *Handler) receiveWebhook(w http.ResponseWriter, r *http.Request, id stri
 		w.Header().Set("Content-Type", "application/json")
 	}
 	w.WriteHeader(respStatus)
-	w.Write([]byte(responseBody))
+	w.Write([]byte(responseBody + "\n"))
 }

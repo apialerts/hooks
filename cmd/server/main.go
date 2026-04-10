@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"log"
@@ -57,6 +58,7 @@ func main() {
 		baseURL = fmt.Sprintf("http://localhost:%s", port)
 	}
 
+	healthToken := os.Getenv("HEALTH_TOKEN")
 	killSwitch := os.Getenv("KILL_SWITCH") == "true"
 
 	ctx := context.Background()
@@ -140,8 +142,23 @@ func main() {
 	r.Post("/endpoints", h.CreateEndpoint)
 	r.Get("/privacy", h.Privacy)
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ok"))
+		if healthToken == "" || r.Header.Get("Authorization") != "Bearer "+healthToken {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("ok\n"))
+			return
+		}
+		status, err := queries.HealthCheck(r.Context())
+		if err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(w).Encode(map[string]string{"status": "error", "error": err.Error()})
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":     "ok",
+			"migration":  status.MigrationVersion,
+			"endpoints":  status.EndpointCount,
+		})
 	})
 	r.Get("/robots.txt", h.RobotsTxt)
 	r.Get("/sitemap.xml", h.SitemapXml)

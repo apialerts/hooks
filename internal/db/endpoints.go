@@ -27,6 +27,28 @@ func New(pool *pgxpool.Pool) *Queries {
 	return &Queries{pool: pool}
 }
 
+type HealthStatus struct {
+	MigrationVersion int64
+	EndpointCount    int
+}
+
+func (q *Queries) HealthCheck(ctx context.Context) (*HealthStatus, error) {
+	h := &HealthStatus{}
+	err := q.pool.QueryRow(ctx,
+		`SELECT COALESCE(MAX(version_id), 0) FROM goose_db_version`,
+	).Scan(&h.MigrationVersion)
+	if err != nil {
+		return nil, err
+	}
+	err = q.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM endpoint`,
+	).Scan(&h.EndpointCount)
+	if err != nil {
+		return nil, err
+	}
+	return h, nil
+}
+
 func (q *Queries) CreateEndpoint(ctx context.Context, slug, creatorIP string) error {
 	_, err := q.pool.Exec(ctx,
 		`INSERT INTO endpoint (slug, creator_ip) VALUES ($1, $2)`,
