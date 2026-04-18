@@ -5,6 +5,7 @@ const layoutStart = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#FF7A00">
     <title>{{if .PageTitle}}{{.PageTitle}} - {{end}}hooks.apialerts.com</title>
     <meta name="description" content="{{if .PageDescription}}{{.PageDescription}}{{else}}Free webhook testing tool. Generate a unique URL, inspect requests, and toggle between success and failure responses to test retry logic. No sign-up required.{{end}}">
     <meta name="author" content="API Alerts">
